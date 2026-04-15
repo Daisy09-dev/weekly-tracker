@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Weekly Tracker 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--surface:#141417;--card:#1a1a1f;--card2:#1f1f26;
+  --border:#2a2a35;--border2:#353545;
+  --green:#4ade80;--green-dim:#1a3d2a;--green-text:#86efac;
+  --yellow:#fbbf24;--yellow-dim:#3d2e0a;--yellow-text:#fde68a;
+  --blue:#60a5fa;--blue-dim:#0f2040;--blue-text:#93c5fd;
+  --purple:#a78bfa;--purple-dim:#2a1f4a;--purple-text:#c4b5fd;
+  --red:#f87171;--red-dim:#3d1515;--red-text:#fca5a5;
+  --text:#f0f0f8;--text2:#9090a8;--text3:#5a5a72;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(13,13,15,0.92);backdrop-filter:blur(12px);z-index:100}
+.logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--green)}
+.nav-tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-sm);padding:4px;border:1px solid var(--border)}
+.nav-tab{padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.nav-tab.active{background:var(--card2);color:var(--text);border:1px solid var(--border2)}
+.date-pill{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);background:var(--surface);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
+
+/* LAYOUT */
+.page{display:none;padding:1.5rem;max-width:800px;margin:0 auto}
+.page.active{display:block}
+
+/* IDENTITY BAR */
+.identity-bar{background:linear-gradient(135deg,var(--green-dim),var(--blue-dim));border:1px solid var(--green);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px}
+.identity-icon{width:36px;height:36px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.identity-text{font-size:14px;color:var(--green-text);font-style:italic;font-family:'DM Serif Display',serif}
+
+/* DATE NAV */
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.date-nav button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-family:'Outfit',sans-serif;transition:all .2s}
+.date-nav button:hover{border-color:var(--border2);background:var(--card)}
+.current-day{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text)}
+.current-day span{font-size:13px;font-family:'Outfit',sans-serif;color:var(--text3);display:block;margin-top:2px}
+
+/* FAIL-SAFE MODE */
+.failsafe-toggle{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;cursor:pointer;width:fit-content}
+.failsafe-toggle input{display:none}
+.toggle-track{width:40px;height:22px;background:var(--border);border-radius:20px;position:relative;transition:all .2s}
+.toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;background:var(--text2);border-radius:50%;transition:all .2s}
+.failsafe-toggle input:checked+.toggle-track{background:var(--yellow-dim);border:1px solid var(--yellow)}
+.failsafe-toggle input:checked+.toggle-track .toggle-knob{left:19px;background:var(--yellow)}
+.toggle-label{font-size:13px;color:var(--text2)}
+
+/* HABIT GROUPS */
+.habit-section{margin-bottom:1.25rem}
+.habit-section-title{font-size:11px;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;padding-left:4px}
+.habit-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:all .2s;user-select:none}
+.habit-item:hover{border-color:var(--border2)}
+.habit-item.checked{background:var(--green-dim);border-color:var(--green)}
+.habit-item.failsafe-only{opacity:.4;pointer-events:none}
+.habit-item.failsafe-only.failsafe-visible{opacity:1;pointer-events:auto}
+.habit-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.habit-item.checked .habit-check{background:var(--green);border-color:var(--green)}
+.checkmark{display:none;color:#000;font-size:13px;font-weight:700}
+.habit-item.checked .checkmark{display:block}
+.habit-label{font-size:14px;color:var(--text);flex:1}
+.habit-item.checked .habit-label{color:var(--green-text)}
+.habit-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text3)}
+
+/* ENERGY SLIDERS */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:.06em}
+.metric-value{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:500;margin-bottom:8px}
+.metric-card.energy .metric-value{color:var(--yellow)}
+.metric-card.focus .metric-value{color:var(--blue)}
+.metric-card.mood .metric-value{color:var(--purple)}
+.metric-card input[type=range]{width:100%;accent-color:currentColor}
+
+/* REFLECTION */
+.reflection-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:1.25rem}
+.reflection-box label{font-size:11px;color:var(--text3);letter-spacing:.06em;display:block;margin-bottom:8px}
+.reflection-box textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;resize:none;outline:none;line-height:1.7;min-height:80px}
+.reflection-box textarea::placeholder{color:var(--text3)}
+
+/* SAVE BUTTON */
+.save-btn{width:100%;padding:14px;background:var(--green);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.save-btn:hover{opacity:.88;transform:translateY(-1px)}
+.save-btn:active{transform:translateY(0)}
+
+/* WEEKLY PAGE */
+.week-header{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1.5rem}
+.week-day{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 6px;text-align:center;cursor:pointer;transition:all .2s}
+.week-day:hover{border-color:var(--border2)}
+.week-day.has-data{border-color:var(--green);background:var(--green-dim)}
+.week-day.today{border-color:var(--blue)}
+.wday-name{font-size:10px;color:var(--text3);margin-bottom:4px}
+.wday-num{font-size:15px;font-weight:500}
+.wday-score{font-size:10px;color:var(--green);margin-top:4px;font-family:'DM Mono',monospace}
+
+.score-summary{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem}
+.score-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.score-label{font-size:13px;color:var(--text2)}
+.score-big{font-family:'DM Serif Display',serif;font-size:2.5rem}
+.score-pct{font-size:13px;color:var(--text3);margin-top:2px}
+.progress-bar{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.phase-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-bottom:1rem}
+.phase-1{background:var(--green-dim);color:var(--green-text);border:1px solid var(--green)}
+.phase-2{background:var(--yellow-dim);color:var(--yellow-text);border:1px solid var(--yellow)}
+.phase-3{background:var(--blue-dim);color:var(--blue-text);border:1px solid var(--blue)}
+.phase-4{background:var(--purple-dim);color:var(--purple-text);border:1px solid var(--purple)}
+
+/* WEEKLY REFLECTION */
+.reflection-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem}
+.reflection-section h3{font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:1rem;color:var(--text)}
+.q-item{margin-bottom:1rem}
+.q-item label{font-size:12px;color:var(--text3);display:block;margin-bottom:6px}
+.q-item textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;resize:none;outline:none;border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;min-height:60px;transition:border .2s}
+.q-item textarea:focus{border-color:var(--border2)}
+
+/* MONTHLY PAGE */
+.month-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1.25rem}
+.month-metric{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem}
+.month-metric-title{font-size:12px;color:var(--text3);margin-bottom:.75rem;letter-spacing:.05em}
+.month-ring{width:64px;height:64px;margin:0 auto .75rem;position:relative}
+.ring-svg{transform:rotate(-90deg)}
+.ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+.month-trend{font-size:11px;color:var(--text3);text-align:center}
+.month-trend.up{color:var(--green-text)}
+.month-trend.down{color:var(--red-text)}
+
+.checkpoint-card{background:var(--card2);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+.checkpoint-q{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.checkpoint-q:last-child{border-bottom:none}
+.checkpoint-q span{font-size:14px;color:var(--text2)}
+.checkpoint-btns{display:flex;gap:6px}
+.cp-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.cp-btn.yes{border-color:var(--green);color:var(--green-text);background:var(--green-dim)}
+.cp-btn.no{border-color:var(--red);color:var(--red-text);background:var(--red-dim)}
+
+/* STATUS MSG */
+.status-msg{text-align:center;padding:10px;font-size:13px;border-radius:var(--radius-sm);margin-top:12px;display:none}
+.status-msg.show{display:block;background:var(--green-dim);color:var(--green-text);border:1px solid var(--green)}
+
+@media(max-width:520px){
+  .metrics-grid{grid-template-columns:repeat(3,1fr)}
+  .month-grid{grid-template-columns:1fr 1fr}
+  nav{flex-wrap:wrap;gap:8px}
+  .nav-tabs{order:3;width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">daisy.track</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('daily')">Daily</button>
+    <button class="nav-tab" onclick="showPage('weekly')">Weekly</button>
+    <button class="nav-tab" onclick="showPage('monthly')">Monthly</button>
+  </div>
+  <div class="date-pill" id="today-label"></div>
+</nav>
+
+<!-- DAILY PAGE -->
+<div class="page active" id="page-daily">
+  <div class="identity-bar">
+    <div class="identity-icon">&#10024;</div>
+    <div class="identity-text">"I am someone who shows up daily."</div>
+  </div>
+
+  <div class="date-nav">
+    <button onclick="changeDay(-1)">&#8592; Prev</button>
+    <div style="text-align:center">
+      <div class="current-day" id="day-title">Monday</div>
+      <span id="day-subtitle" style="font-size:13px;color:var(--text3);display:block;margin-top:2px"></span>
+    </div>
+    <button onclick="changeDay(1)">Next &#8594;</button>
+  </div>
+
+  <!-- FAIL-SAFE TOGGLE -->
+  <label class="failsafe-toggle">
+    <input type="checkbox" id="failsafe-mode" onchange="toggleFailsafe()"/>
+    <div class="toggle-track"><div class="toggle-knob"></div></div>
+    <span class="toggle-label">&#9888; Fail-safe mode (overwhelmed?)</span>
+  </label>
+
+  <!-- HABITS -->
+  <div class="habit-section">
+    <div class="habit-section-title">SLEEP & RECOVERY</div>
+    <div class="habit-item" onclick="toggleHabit(this,'sleep')" data-key="sleep" data-failsafe="true">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">Slept before 11:00 PM</span>
+      <span class="habit-tag">core</span>
+    </div>
+    <div class="habit-item" onclick="toggleHabit(this,'phone-away')" data-key="phone-away">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">Phone away by 10:30 PM</span>
+      <span class="habit-tag">night</span>
+    </div>
+  </div>
+
+  <div class="habit-section">
+    <div class="habit-section-title">MIND & SPIRIT</div>
+    <div class="habit-item" onclick="toggleHabit(this,'spiritual')" data-key="spiritual" data-failsafe="true">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">Spiritual (5–10 min)</span>
+      <span class="habit-tag">core</span>
+    </div>
+    <div class="habit-item" onclick="toggleHabit(this,'phone-control')" data-key="phone-control">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">Controlled Phone Use</span>
+      <span class="habit-tag">focus</span>
+    </div>
+  </div>
+
+  <div class="habit-section">
+    <div class="habit-section-title">STUDY & GROWTH</div>
+    <div class="habit-item" onclick="toggleHabit(this,'study-blocks')" data-key="study-blocks" data-failsafe="true">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">2 Study Blocks (25 min each)</span>
+      <span class="habit-tag">core</span>
+    </div>
+    <div class="habit-item" onclick="toggleHabit(this,'assignment')" data-key="assignment">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">1 Assignment Progress</span>
+      <span class="habit-tag">school</span>
+    </div>
+    <div class="habit-item" onclick="toggleHabit(this,'movement')" data-key="movement">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">Physical Movement (5–10 min)</span>
+      <span class="habit-tag">body</span>
+    </div>
+    <div class="habit-item" onclick="toggleHabit(this,'reflection-done')" data-key="reflection-done">
+      <div class="habit-check"><span class="checkmark">&#10003;</span></div>
+      <span class="habit-label">1-Line Reflection written</span>
+      <span class="habit-tag">journal</span>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics-grid">
+    <div class="metric-card energy">
+      <div class="metric-label">ENERGY</div>
+      <div class="metric-value" id="energy-val">3</div>
+      <input type="range" min="1" max="5" value="3" step="1" oninput="document.getElementById('energy-val').textContent=this.value;saveDayData()"/>
+    </div>
+    <div class="metric-card focus">
+      <div class="metric-label">FOCUS</div>
+      <div class="metric-value" id="focus-val">3</div>
+      <input type="range" min="1" max="5" value="3" step="1" oninput="document.getElementById('focus-val').textContent=this.value;saveDayData()"/>
+    </div>
+    <div class="metric-card mood">
+      <div class="metric-label">MOOD</div>
+      <div class="metric-value" id="mood-val">3</div>
+      <input type="range" min="1" max="5" value="3" step="1" oninput="document.getElementById('mood-val').textContent=this.value;saveDayData()"/>
+    </div>
+  </div>
+
+  <!-- REFLECTION -->
+  <div class="reflection-box">
+    <label>DAILY REFLECTION</label>
+    <textarea id="daily-reflection" rows="3" placeholder="One honest line about today..."></textarea>
+  </div>
+
+  <!-- SCORE TODAY -->
+  <div class="score-summary" id="today-score">
+    <div class="score-row">
+      <div>
+        <div class="score-label">Today's score</div>
+        <div class="score-big" id="today-score-num" style="color:var(--green)">0/8</div>
+        <div class="score-pct" id="today-score-pct">0%</div>
+      </div>
+      <div style="text-align:right">
+        <div class="score-label" style="margin-bottom:6px">Status</div>
+        <div id="today-status" style="font-size:13px;color:var(--text2)">Keep going</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="today-bar" style="width:0%;background:var(--green)"></div></div>
+  </div>
+
+  <button class="save-btn" onclick="saveDay()">Save Today &#10003;</button>
+  <div class="status-msg" id="save-msg">Day saved!</div>
+</div>
+
+<!-- WEEKLY PAGE -->
+<div class="page" id="page-weekly">
+  <div style="margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.4rem">This Week</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px" id="week-range-label"></div>
+    </div>
+    <div id="phase-badge" class="phase-badge phase-1">Phase 1 — Show up</div>
+  </div>
+
+  <div class="week-header" id="week-days-grid"></div>
+
+  <div class="score-summary">
+    <div class="score-row">
+      <div>
+        <div class="score-label">Weekly checks</div>
+        <div class="score-big" id="weekly-score-num" style="color:var(--green)">0</div>
+        <div class="score-pct" id="weekly-score-pct">of 56 possible</div>
+      </div>
+      <div style="text-align:right">
+        <div class="score-label" style="margin-bottom:4px">Days shown up</div>
+        <div style="font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--blue)" id="days-shown">0/7</div>
+      </div>
+    </div>
+    <div class="progress-bar" style="margin-bottom:8px">
+      <div class="progress-fill" id="weekly-bar" style="width:0%;background:var(--green)"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text3)" id="weekly-verdict">Track more days to see your verdict.</div>
+  </div>
+
+  <div class="reflection-section">
+    <h3>Sunday Reflection</h3>
+    <div class="q-item">
+      <label>1. What did I do well this week?</label>
+      <textarea rows="2" placeholder="Be specific and honest..." id="wr-q1" oninput="saveWeeklyReflection()"></textarea>
+    </div>
+    <div class="q-item">
+      <label>2. Where did I struggle most?</label>
+      <textarea rows="2" placeholder="No judgment, just facts..." id="wr-q2" oninput="saveWeeklyReflection()"></textarea>
+    </div>
+    <div class="q-item">
+      <label>3. What caused it? (sleep, phone, mood?)</label>
+      <textarea rows="2" placeholder="Find the root, not the blame..." id="wr-q3" oninput="saveWeeklyReflection()"></textarea>
+    </div>
+    <div class="q-item">
+      <label>4. What will I adjust next week?</label>
+      <textarea rows="2" placeholder="One small, specific change..." id="wr-q4" oninput="saveWeeklyReflection()"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- MONTHLY PAGE -->
+<div class="page" id="page-monthly">
+  <div style="margin-bottom:1.25rem">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.4rem">Monthly Checkpoint</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:2px" id="month-label"></div>
+  </div>
+
+  <div class="month-grid">
+    <div class="month-metric">
+      <div class="month-metric-title">SLEEP CONSISTENCY</div>
+      <div class="month-ring">
+        <svg class="ring-svg" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--green)" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" id="ring-sleep" stroke-dashoffset="163.4"/>
+        </svg>
+        <div class="ring-text" id="ring-sleep-txt" style="color:var(--green)">0%</div>
+      </div>
+      <div class="month-trend" id="trend-sleep">No data yet</div>
+    </div>
+    <div class="month-metric">
+      <div class="month-metric-title">STUDY CONSISTENCY</div>
+      <div class="month-ring">
+        <svg class="ring-svg" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--blue)" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" id="ring-study" stroke-dashoffset="163.4"/>
+        </svg>
+        <div class="ring-text" id="ring-study-txt" style="color:var(--blue)">0%</div>
+      </div>
+      <div class="month-trend" id="trend-study">No data yet</div>
+    </div>
+    <div class="month-metric">
+      <div class="month-metric-title">PHONE CONTROL</div>
+      <div class="month-ring">
+        <svg class="ring-svg" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--yellow)" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" id="ring-phone" stroke-dashoffset="163.4"/>
+        </svg>
+        <div class="ring-text" id="ring-phone-txt" style="color:var(--yellow)">0%</div>
+      </div>
+      <div class="month-trend" id="trend-phone">No data yet</div>
+    </div>
+    <div class="month-metric">
+      <div class="month-metric-title">EMOTIONAL STABILITY</div>
+      <div class="month-ring">
+        <svg class="ring-svg" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--purple)" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" id="ring-mood" stroke-dashoffset="163.4"/>
+        </svg>
+        <div class="ring-text" id="ring-mood-txt" style="color:var(--purple)">0%</div>
+      </div>
+      <div class="month-trend" id="trend-mood">No data yet</div>
+    </div>
+  </div>
+
+  <div class="checkpoint-card">
+    <div style="font-family:'DM Serif Display',serif;font-size:1rem;margin-bottom:.5rem">Monthly Check-in</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:1rem">Honest answers only. No pressure.</div>
+    <div id="checkpoint-questions">
+      <div class="checkpoint-q" data-q="consistent">
+        <span>Am I more consistent than last month?</span>
+        <div class="checkpoint-btns">
+          <button class="cp-btn" onclick="cpAnswer(this,'consistent','yes')">Yes</button>
+          <button class="cp-btn" onclick="cpAnswer(this,'consistent','no')">No</button>
+        </div>
+      </div>
+      <div class="checkpoint-q" data-q="sleep-better">
+        <span>Is my sleep better?</span>
+        <div class="checkpoint-btns">
+          <button class="cp-btn" onclick="cpAnswer(this,'sleep-better','yes')">Yes</button>
+          <button class="cp-btn" onclick="cpAnswer(this,'sleep-better','no')">No</button>
+        </div>
+      </div>
+      <div class="checkpoint-q" data-q="overwhelm">
+        <span>Am I less overwhelmed?</span>
+        <div class="checkpoint-btns">
+          <button class="cp-btn" onclick="cpAnswer(this,'overwhelm','yes')">Yes</button>
+          <button class="cp-btn" onclick="cpAnswer(this,'overwhelm','no')">No</button>
+        </div>
+      </div>
+      <div class="checkpoint-q" data-q="academic">
+        <span>Am I improving academically?</span>
+        <div class="checkpoint-btns">
+          <button class="cp-btn" onclick="cpAnswer(this,'academic','yes')">Yes</button>
+          <button class="cp-btn" onclick="cpAnswer(this,'academic','no')">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reflection-section">
+    <h3>Monthly Note to Self</h3>
+    <div class="q-item">
+      <label>What's one thing I'm proud of this month?</label>
+      <textarea rows="3" placeholder="Even small wins count..." id="monthly-note" oninput="saveMonthlyNote()"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+const HABITS_ALL=['sleep','phone-away','spiritual','phone-control','study-blocks','assignment','movement','reflection-done'];
+const HABITS_FS=['sleep','spiritual','study-blocks'];
+let currentDate=new Date();
+let failsafeMode=false;
+let data={};
+
+function dateKey(d){return d.toISOString().split('T')[0]}
+function loadData(){try{return JSON.parse(localStorage.getItem('daisy_tracker')||'{}')}catch(e){return{}}}
+function saveData(){localStorage.setItem('daisy_tracker',JSON.stringify(data))}
+
+function init(){
+  data=loadData();
+  renderDailyPage();
+  renderWeeklyPage();
+  renderMonthlyPage();
+  document.getElementById('today-label').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('month-label').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const tabs={daily:0,weekly:1,monthly:2};
+  document.querySelectorAll('.nav-tab')[tabs[id]].classList.add('active');
+  if(id==='weekly')renderWeeklyPage();
+  if(id==='monthly')renderMonthlyPage();
+}
+
+function renderDailyPage(){
+  const key=dateKey(currentDate);
+  const dayData=data[key]||{habits:{},energy:3,focus:3,mood:3,reflection:''};
+  document.getElementById('day-title').textContent=currentDate.toLocaleDateString('en-US',{weekday:'long'});
+  document.getElementById('day-subtitle').textContent=currentDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  HABITS_ALL.forEach(h=>{
+    const el=document.querySelector('[data-key="'+h+'"]');
+    if(!el)return;
+    const checked=!!(dayData.habits&&dayData.habits[h]);
+    el.classList.toggle('checked',checked);
+  });
+  const sliders=document.querySelectorAll('.metric-card input[type=range]');
+  sliders[0].value=dayData.energy||3;document.getElementById('energy-val').textContent=sliders[0].value;
+  sliders[1].value=dayData.focus||3;document.getElementById('focus-val').textContent=sliders[1].value;
+  sliders[2].value=dayData.mood||3;document.getElementById('mood-val').textContent=sliders[2].value;
+  document.getElementById('daily-reflection').value=dayData.reflection||'';
+  updateTodayScore();
+}
+
+function toggleHabit(el,key){
+  const k=dateKey(currentDate);
+  if(!data[k])data[k]={habits:{},energy:3,focus:3,mood:3,reflection:''};
+  data[k].habits[key]=!data[k].habits[key];
+  el.classList.toggle('checked',data[k].habits[key]);
+  saveData();
+  updateTodayScore();
+}
+
+function updateTodayScore(){
+  const key=dateKey(currentDate);
+  const dayData=data[key]||{habits:{}};
+  const active=failsafeMode?HABITS_FS:HABITS_ALL;
+  let count=0;
+  active.forEach(h=>{if(dayData.habits&&dayData.habits[h])count++});
+  const total=active.length;
+  const pct=Math.round((count/total)*100);
+  document.getElementById('today-score-num').textContent=count+'/'+total;
+  document.getElementById('today-score-pct').textContent=pct+'%';
+  document.getElementById('today-bar').style.width=pct+'%';
+  let status='Keep going';let col='var(--text2)';
+  if(pct>=80){status='Strong day!';col='var(--green)'}
+  else if(pct>=60){status='Improving';col='var(--yellow)'}
+  else if(count>=1){status='You showed up';col='var(--blue)'}
+  document.getElementById('today-status').textContent=status;
+  document.getElementById('today-status').style.color=col;
+}
+
+function toggleFailsafe(){
+  failsafeMode=document.getElementById('failsafe-mode').checked;
+  const nonFs=document.querySelectorAll('.habit-item:not([data-failsafe])');
+  nonFs.forEach(el=>{
+    if(failsafeMode){el.classList.add('failsafe-only')}
+    else{el.classList.remove('failsafe-only')}
+  });
+  updateTodayScore();
+}
+
+function saveDayData(){
+  const key=dateKey(currentDate);
+  if(!data[key])data[key]={habits:{},energy:3,focus:3,mood:3,reflection:''};
+  const sliders=document.querySelectorAll('.metric-card input[type=range]');
+  data[key].energy=parseInt(sliders[0].value);
+  data[key].focus=parseInt(sliders[1].value);
+  data[key].mood=parseInt(sliders[2].value);
+  saveData();
+}
+
+function saveDay(){
+  const key=dateKey(currentDate);
+  if(!data[key])data[key]={habits:{},energy:3,focus:3,mood:3,reflection:''};
+  const sliders=document.querySelectorAll('.metric-card input[type=range]');
+  data[key].energy=parseInt(sliders[0].value);
+  data[key].focus=parseInt(sliders[1].value);
+  data[key].mood=parseInt(sliders[2].value);
+  data[key].reflection=document.getElementById('daily-reflection').value;
+  saveData();
+  const msg=document.getElementById('save-msg');
+  msg.classList.add('show');
+  setTimeout(()=>msg.classList.remove('show'),2200);
+}
+
+function changeDay(dir){
+  currentDate.setDate(currentDate.getDate()+dir);
+  renderDailyPage();
+}
+
+function getWeekDays(){
+  const now=new Date();
+  const day=now.getDay();
+  const monday=new Date(now);
+  monday.setDate(now.getDate()-(day===0?6:day-1));
+  const days=[];
+  for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);days.push(d)}
+  return days;
+}
+
+function renderWeeklyPage(){
+  const days=getWeekDays();
+  const names=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const todayKey=dateKey(new Date());
+  const grid=document.getElementById('week-days-grid');
+  grid.innerHTML='';
+  let totalChecks=0,daysShown=0;
+  days.forEach((d,i)=>{
+    const key=dateKey(d);
+    const dd=data[key];
+    let score=0;
+    if(dd&&dd.habits){HABITS_ALL.forEach(h=>{if(dd.habits[h])score++})}
+    if(score>0)daysShown++;
+    totalChecks+=score;
+    const pct=Math.round((score/8)*100);
+    const div=document.createElement('div');
+    div.className='week-day'+(score>0?' has-data':'')+(key===todayKey?' today':'');
+    div.innerHTML='<div class="wday-name">'+names[i]+'</div><div class="wday-num">'+d.getDate()+'</div>'+(score>0?'<div class="wday-score">'+pct+'%</div>':'');
+    div.onclick=()=>{currentDate=new Date(d);showPage('daily');renderDailyPage()};
+    grid.appendChild(div);
+  });
+  const possible=56;
+  const weekPct=Math.round((totalChecks/possible)*100);
+  document.getElementById('weekly-score-num').textContent=totalChecks;
+  document.getElementById('days-shown').textContent=daysShown+'/7';
+  document.getElementById('weekly-bar').style.width=weekPct+'%';
+  let verdict='',col='var(--text2)';
+  if(weekPct>=80){verdict='Strong week — keep this energy!';col='var(--green)'}
+  else if(weekPct>=60){verdict='Improving — you are building something real.';col='var(--yellow)'}
+  else if(totalChecks>0){verdict='Below 60% — adjust the system, not yourself.';col='var(--red)'}
+  else{verdict='No data yet. Start tracking!';col='var(--text3)'}
+  document.getElementById('weekly-verdict').textContent=verdict;
+  document.getElementById('weekly-verdict').style.color=col;
+  const start=days[0].toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const end=days[6].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('week-range-label').textContent=start+' – '+end;
+  const weekNum=getWeekNum();
+  const pb=document.getElementById('phase-badge');
+  pb.className='phase-badge';
+  if(weekNum<=2){pb.classList.add('phase-1');pb.textContent='Phase 1 — Show up'}
+  else if(weekNum<=6){pb.classList.add('phase-2');pb.textContent='Phase 2 — Build stability'}
+  else if(weekNum<=12){pb.classList.add('phase-3');pb.textContent='Phase 3 — Take control'}
+  else{pb.classList.add('phase-4');pb.textContent='Phase 4 — Refine your identity'}
+  const wr=data['weekly_reflection']||{};
+  ['q1','q2','q3','q4'].forEach(q=>{
+    const el=document.getElementById('wr-'+q);
+    if(el)el.value=wr[q]||'';
+  });
+}
+
+function getWeekNum(){
+  const start=new Date('2026-04-14');
+  const now=new Date();
+  const diff=Math.floor((now-start)/(7*24*60*60*1000));
+  return Math.max(1,diff+1);
+}
+
+function saveWeeklyReflection(){
+  data['weekly_reflection']={
+    q1:document.getElementById('wr-q1').value,
+    q2:document.getElementById('wr-q2').value,
+    q3:document.getElementById('wr-q3').value,
+    q4:document.getElementById('wr-q4').value
+  };
+  saveData();
+}
+
+function renderMonthlyPage(){
+  const allKeys=Object.keys(data).filter(k=>k.match(/^\d{4}-\d{2}-\d{2}$/));
+  const month=new Date().toISOString().slice(0,7);
+  const monthKeys=allKeys.filter(k=>k.startsWith(month));
+  const daysInMonth=monthKeys.length;
+  let sleepCount=0,studyCount=0,phoneCount=0,moodSum=0;
+  monthKeys.forEach(k=>{
+    const d=data[k];if(!d)return;
+    if(d.habits&&d.habits['sleep'])sleepCount++;
+    if(d.habits&&d.habits['study-blocks'])studyCount++;
+    if(d.habits&&d.habits['phone-control'])phoneCount++;
+    moodSum+=(d.mood||3);
+  });
+  const base=Math.max(daysInMonth,1);
+  const sleepPct=Math.round((sleepCount/base)*100);
+  const studyPct=Math.round((studyCount/base)*100);
+  const phonePct=Math.round((phoneCount/base)*100);
+  const moodPct=Math.round(((moodSum/base)/5)*100);
+  function setRing(id,pct){
+    const circ=163.4;
+    const offset=circ-(circ*(pct/100));
+    document.getElementById('ring-'+id).style.strokeDashoffset=offset;
+    document.getElementById('ring-'+id+'-txt').textContent=pct+'%';
+  }
+  setRing('sleep',sleepPct);setRing('study',studyPct);setRing('phone',phonePct);setRing('mood',moodPct);
+  function trend(pct,id){
+    const el=document.getElementById('trend-'+id);
+    if(daysInMonth===0){el.textContent='No data yet';el.className='month-trend';return}
+    if(pct>=75){el.textContent='Consistent';el.className='month-trend up'}
+    else if(pct>=50){el.textContent='Building';el.className='month-trend'}
+    else{el.textContent='Needs work';el.className='month-trend down'}
+  }
+  trend(sleepPct,'sleep');trend(studyPct,'study');trend(phonePct,'phone');trend(moodPct,'mood');
+  const cp=data['checkpoint']||{};
+  document.querySelectorAll('.checkpoint-q').forEach(el=>{
+    const q=el.dataset.q;
+    const ans=cp[q];
+    el.querySelectorAll('.cp-btn').forEach(btn=>btn.classList.remove('yes','no'));
+    if(ans){const b=el.querySelector('[onclick*="\''+ans+'\'"]');if(b)b.classList.add(ans)}
+  });
+  const mn=document.getElementById('monthly-note');
+  if(mn)mn.value=data['monthly_note']||'';
+}
+
+function cpAnswer(btn,q,val){
+  const card=btn.closest('.checkpoint-q');
+  card.querySelectorAll('.cp-btn').forEach(b=>b.classList.remove('yes','no'));
+  btn.classList.add(val);
+  if(!data['checkpoint'])data['checkpoint']={};
+  data['checkpoint'][q]=val;
+  saveData();
+}
+
+function saveMonthlyNote(){
+  data['monthly_note']=document.getElementById('monthly-note').value;
+  saveData();
+}
+
+init();
+</script>
+</body>
+</html>

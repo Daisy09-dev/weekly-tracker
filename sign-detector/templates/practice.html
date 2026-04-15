@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice - Sign Language Study</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <h1>Practice Sign Language</h1>
+            <div class="nav-links">
+                <a href="/dashboard">Home</a>
+                <a href="/learn">Learn</a>
+                <a href="/practice">Practice</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </nav>
+        
+        <main class="practice-page">
+            <div class="practice-header">
+                <h2>Real-Time Practice</h2>
+                <p>Use your webcam to practice sign language gestures</p>
+            </div>
+            
+            <div class="practice-container">
+                <div class="video-section">
+                    <div style="position:relative;">
+                        <video id="webcam" autoplay playsinline style="transform:scaleX(-1);"></video>
+                        <canvas id="canvas"></canvas>
+                    </div>
+                    <div class="controls">
+                        <button id="startBtn" class="btn btn-primary">Start Camera & Hand Tracking</button>
+                        <button id="stopBtn" class="btn btn-secondary" style="display:none;">Stop Camera</button>
+                        <button id="speakBtn" class="btn btn-accent" style="display:none;">🔊 Speak Sign</button>
+                    </div>
+                </div>
+                
+                <div class="practice-info">
+                    <h3>Practice Tips</h3>
+                    <ul>
+                        <li>Ensure good lighting</li>
+                        <li>Position hands clearly in frame</li>
+                        <li>Practice slowly at first</li>
+                        <li>Repeat each sign 5-10 times</li>
+                    </ul>
+                    
+                    <div class="detection-result">
+                        <h3>Detection Status</h3>
+                        <p id="status">Camera not started</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let stream = null;
+        let detector = null;
+        let animationId = null;
+        let currentSign = null;
+        let detectedFingers = [];
+        
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const status = document.getElementById('status');
+        
+        // Text-to-Speech function
+        function speakSign(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.8;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                speechSynthesis.speak(utterance);
+                status.textContent = `🔊 Speaking: "${text}"`;
+            } else {
+                status.textContent = 'Text-to-speech not supported in this browser';
+            }
+        }
+        
+        // Initialize hand detector
+        async function initHandDetector() {
+            const model = handPoseDetection.SupportedModels.MediaPipeHands;
+            const detectorConfig = {
+                runtime: 'tfjs',
+                modelType: 'full',
+                maxHands: 2
+            };
+            return await handPoseDetection.createDetector(model, detectorConfig);
+        }
+        
+        // Draw hand landmarks and connections
+        function drawHand(hands) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (hands && hands.length > 0) {
+                hands.forEach(hand => {
+                    // Draw keypoints
+                    if (hand.keypoints) {
+                        hand.keypoints.forEach((keypoint, index) => {
+                            const {x, y} = keypoint;
+                            
+                            // Draw points
+                            ctx.beginPath();
+                            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                            ctx.fillStyle = '#667eea';
+                            ctx.fill();
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                            
+                            // Draw index for debugging
+                            ctx.fillStyle = 'white';
+                            ctx.font = '10px Arial';
+                            ctx.fillText(index, x + 8, y - 8);
+                        });
+                        
+                        // Draw connections between points
+                        const connections = [
+                            // Thumb
+                            [0,1],[1,2],[2,3],[3,4],
+                            // Index finger
+                            [0,5],[5,6],[6,7],[7,8],
+                            // Middle finger
+                            [0,9],[9,10],[10,11],[11,12],
+                            // Ring finger
+                            [0,13],[13,14],[14,15],[15,16],
+                            // Pinky
+                            [0,17],[17,18],[18,19],[19,20],
+                            // Palm
+                            [5,9],[9,13],[13,17]
+                        ];
+                        
+                        ctx.strokeStyle = '#48bb78';
+                        ctx.lineWidth = 2;
+                        connections.forEach(([start, end]) => {
+                            const startPoint = hand.keypoints[start];
+                            const endPoint = hand.keypoints[end];
+                            ctx.beginPath();
+                            ctx.moveTo(startPoint.x, startPoint.y);
+                            ctx.lineTo(endPoint.x, endPoint.y);
+                            ctx.stroke();
+                        });
+                        
+                        // Analyze hand gesture
+                        analyzeGesture(hand.keypoints);
+                    }
+                });
+            }
+        }
+        
+        // Analyze which fingers are extended
+        function analyzeGesture(keypoints) {
+            const extended = [];
+            
+            // Check thumb (compare tip to base)
+            if (keypoints[4].x < keypoints[3].x - 20) extended.push('thumb');
+            
+            // Check index finger
+            if (keypoints[8].y < keypoints[6].y - 20) extended.push('index');
+            
+            // Check middle finger
+            if (keypoints[12].y < keypoints[10].y - 20) extended.push('middle');
+            
+            // Check ring finger
+            if (keypoints[16].y < keypoints[14].y - 20) extended.push('ring');
+            
+            // Check pinky
+            if (keypoints[20].y < keypoints[18].y - 20) extended.push('pinky');
+            
+            detectedFingers = extended;
+            
+            // Detect specific signs
+            let detectedSign = 'Unknown';
+            const count = extended.length;
+            
+            if (count === 0) {
+                detectedSign = 'Fist (Letter A, S, or Number fist signs)';
+            } else if (count === 1) {
+                if (extended.includes('index')) detectedSign = 'Pointing / Number 1 / Letter D,G';
+                else if (extended.includes('pinky')) detectedSign = 'Letter I';
+                else if (extended.includes('thumb')) detectedSign = 'Thumb up / Like';
+            } else if (count === 2) {
+                if (extended.includes('index') && extended.includes('middle')) {
+                    detectedSign = 'Peace Sign / Letter V / Number 2';
+                } else if (extended.includes('thumb') && extended.includes('pinky')) {
+                    detectedSign = 'Letter Y / Hang Loose / Number 6';
+                } else if (extended.includes('thumb') && extended.includes('index')) {
+                    detectedSign = 'Letter L';
+                }
+            } else if (count === 3) {
+                if (extended.includes('index') && extended.includes('middle') && extended.includes('ring')) {
+                    detectedSign = 'Letter W / Number 3 (with thumb)';
+                }
+            } else if (count === 4) {
+                detectedSign = 'Four Fingers / Letter B (if flat) / Number 4';
+            } else if (count === 5) {
+                detectedSign = 'Open Hand / Number 5 / Hello';
+            }
+            
+            currentSign = detectedSign;
+            status.textContent = `👋 Detected: ${detectedSign}`;
+        }
+        
+        // Detect hands continuously
+        async function detectHands() {
+            if (detector && video.readyState === 4) {
+                const hands = await detector.estimateHands(video);
+                drawHand(hands);
+            }
+            animationId = requestAnimationFrame(detectHands);
+        }
+        
+        // Start camera and detection
+        startBtn.addEventListener('click', async () => {
+            try {
+                status.textContent = 'Initializing camera and AI model...';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                video.srcObject = stream;
+                
+                // Wait for video to be ready
+                await new Promise(resolve => {
+                    video.onloadedmetadata = () => resolve();
+                });
+                
+                // Set canvas size
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.transform = 'scaleX(-1)';
+                
+                status.textContent = 'Loading hand tracking AI model...';
+                detector = await initHandDetector();
+                
+                status.textContent = '✅ Hand tracking active! Show your hand to the camera';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                speakBtn.style.display = 'inline-block';
+                
+                detectHands();
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+                console.error(err);
+            }
+        });
+        
+        // Stop camera
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            status.textContent = 'Camera stopped';
+            startBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            speakBtn.style.display = 'none';
+        });
+        
+        // Speak the detected sign
+        speakBtn.addEventListener('click', () => {
+            if (currentSign && currentSign !== 'Unknown') {
+                speakSign(currentSign);
+            } else {
+                status.textContent = 'No sign detected yet. Show your hand to the camera.';
+            }
+        });
+    </script>
+</body>
+</html>

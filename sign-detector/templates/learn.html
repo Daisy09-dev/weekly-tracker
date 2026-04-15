@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn - Sign Language Study</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <h1>Learn Sign Language</h1>
+            <div class="nav-links">
+                <a href="/dashboard">Home</a>
+                <a href="/learn">Learn</a>
+                <a href="/practice">Practice</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </nav>
+        
+        <main class="learn-page">
+            <div class="lesson-header">
+                <h2>Sign Language Lessons</h2>
+                <p>Master the basics of sign language with structured lessons</p>
+            </div>
+            
+            <div id="lessonsContainer" class="lessons-grid">
+                {% if lessons %}
+                    {% for lesson in lessons %}
+                    <div class="lesson-card">
+                        <h3>{{ lesson.title }}</h3>
+                        <p>{{ lesson.description }}</p>
+                        <span class="difficulty">{{ lesson.difficulty }}</span>
+                        <button class="btn btn-primary" onclick="startLesson({{ lesson.id }})">Start</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-lessons">
+                        <p>No lessons available yet. Check back soon!</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="default-lessons" style="margin-top: 30px;">
+                <h3>Basic Sign Language</h3>
+                <div class="lessons-grid">
+                    <div class="lesson-card">
+                        <h3>Alphabet Signs</h3>
+                        <p>Learn the A-Z finger spelling alphabet</p>
+                        <span class="difficulty">Beginner</span>
+                    </div>
+                    <div class="lesson-card">
+                        <h3>Common Phrases</h3>
+                        <p>Essential greetings and daily expressions</p>
+                        <span class="difficulty">Beginner</span>
+                    </div>
+                    <div class="lesson-card">
+                        <h3>Numbers</h3>
+                        <p>Counting from 1-100 in sign language</p>
+                        <span class="difficulty">Beginner</span>
+                    </div>
+                    <div class="lesson-card">
+                        <h3>Family Signs</h3>
+                        <p>Learn to sign family member names</p>
+                        <span class="difficulty">Intermediate</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function startLesson(lessonId) {
+            fetch(`/api/progress/${lessonId}`, { method: 'POST' })
+                .then(() => alert('Lesson started! Practice this sign.'))
+                .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>

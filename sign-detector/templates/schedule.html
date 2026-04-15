@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule - Sign Language Study</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <h1>Study Schedule</h1>
+            <div class="nav-links">
+                <a href="/dashboard">Home</a>
+                <a href="/learn">Learn</a>
+                <a href="/practice">Practice</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </nav>
+        
+        <main class="schedule-page">
+            <div class="schedule-form">
+                <h2>Create Study Session</h2>
+                <form id="scheduleForm">
+                    <input type="text" id="topic" placeholder="Topic" required>
+                    <input type="number" id="duration" placeholder="Duration (minutes)" required>
+                    <input type="datetime-local" id="scheduledTime" required>
+                    <textarea id="notes" placeholder="Notes (optional)"></textarea>
+                    <button type="submit" class="btn btn-primary">Schedule Session</button>
+                </form>
+                <p class="message" id="message"></p>
+            </div>
+            
+            <div class="sessions-list">
+                <h2>Your Study Sessions</h2>
+                <div id="sessionsContainer">
+                    {% if sessions %}
+                        {% for session in sessions %}
+                        <div class="session-card">
+                            <h3>{{ session.topic }}</h3>
+                            <p>Duration: {{ session.duration }} minutes</p>
+                            <p>Scheduled: {{ session.scheduled_time }}</p>
+                            {% if session.notes %}
+                            <p>Notes: {{ session.notes }}</p>
+                            {% endif %}
+                            <div class="session-status">
+                                {% if session.completed %}
+                                <span class="completed">✓ Completed</span>
+                                {% else %}
+                                <button class="btn btn-small" onclick="completeSession({{ session.id }})">Mark Complete</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p>No scheduled sessions yet. Create one above!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const topic = document.getElementById('topic').value;
+            const duration = document.getElementById('duration').value;
+            const scheduledTime = document.getElementById('scheduledTime').value;
+            const notes = document.getElementById('notes').value;
+            
+            const response = await fetch('/api/schedule', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic, duration, scheduled_time: scheduledTime, notes})
+            });
+            
+            const data = await response.json();
+            const messageEl = document.getElementById('message');
+            
+            if (data.success) {
+                messageEl.textContent = 'Session scheduled successfully!';
+                messageEl.style.color = 'green';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                messageEl.textContent = 'Error scheduling session';
+                messageEl.style.color = 'red';
+            }
+        });
+        
+        async function completeSession(sessionId) {
+            const response = await fetch(`/api/complete_session/${sessionId}`, { method: 'POST' });
+            if (response.ok) {
+                alert('Session marked as complete!');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

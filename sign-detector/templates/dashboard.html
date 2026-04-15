@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sign Language Study</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <h1>Dashboard</h1>
+            <div class="nav-links">
+                <a href="/dashboard">Home</a>
+                <a href="/learn">Learn</a>
+                <a href="/practice">Practice</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </nav>
+        
+        <main class="dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Sessions</h3>
+                    <p id="totalSessions">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Completed</h3>
+                    <p id="completedSessions">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Practice Count</h3>
+                    <p id="totalPractice">0</p>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="/learn" class="btn btn-primary">Start Learning</a>
+                    <a href="/practice" class="btn btn-secondary">Practice Now</a>
+                    <a href="/schedule" class="btn btn-accent">Schedule Session</a>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        async function loadStats() {
+            const response = await fetch('/api/stats');
+            const data = await response.json();
+            document.getElementById('totalSessions').textContent = data.total_sessions;
+            document.getElementById('completedSessions').textContent = data.completed_sessions;
+            document.getElementById('totalPractice').textContent = data.total_practice;
+        }
+        loadStats();
+    </script>
+</body>
+</html>
