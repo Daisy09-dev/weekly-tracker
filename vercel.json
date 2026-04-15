@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "sign-detector/api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": [
+          "sign-detector/templates/**",
+          "sign-detector/static/**",
+          "sign-detector/schema.sql"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "sign-detector/api/index.py"
+    }
+  ]
+}

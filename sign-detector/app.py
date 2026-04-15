@@ -29,6 +29,9 @@ app.config.update(
 
 # Database initialization
 def init_db():
+    db_dir = os.path.dirname(DATABASE)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = sqlite3.connect(DATABASE)
     with open(SCHEMA_FILE, 'r', encoding='utf-8') as schema_file:
         conn.executescript(schema_file.read())

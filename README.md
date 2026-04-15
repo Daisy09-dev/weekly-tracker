@@ -14,8 +14,10 @@ The server needed database initialization in deployed environments.
 - On push to `main` (changes under `time-tracker/`), it deploys the static app to GitHub Pages.
 
 ### 2) Dynamic app (`sign-detector`) → Vercel
-- `sign-detector/vercel.json` is included.
-- In Vercel, import this repo and set **Root Directory** to `sign-detector`.
+- Entry point is explicit: `sign-detector/api/index.py` (imports Flask `app`).
+- You can deploy either:
+  - Repo root (uses root `vercel.json`), or
+  - `sign-detector` as Root Directory (uses `sign-detector/vercel.json`)
 - Add environment variables:
   - `SECRET_KEY` = strong random secret
   - `DATABASE_PATH` = `/tmp/studysystem.db` (works, but ephemeral on serverless)

@@ -13,8 +13,10 @@ Dynamic Flask app with:
    - `python3 app.py`
 
 ## Deployment (Vercel)
-- Root directory: `sign-detector`
-- Config file: `vercel.json`
+- App entrypoint: `api/index.py` (loads Flask app from `app.py`)
+- Deploy options:
+  - Set Root Directory to `sign-detector` (uses `sign-detector/vercel.json`)
+  - Or deploy repo root (uses top-level `vercel.json`)
 - Required environment variable:
   - `SECRET_KEY`
 - Optional:
